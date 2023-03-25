@@ -1,5 +1,4 @@
 {
-    "desktop_count": 3,
     "desktops": [
         {
         "id": 2,
@@ -16,10 +15,6 @@
                 {
                   "name": "Firefox",
                   "start": null 
-                },
-                {
-                  "name": "Chrome",
-                  "start": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
                 }
             ]   
         }

@@ -4,42 +4,15 @@ from global_hotkeys import *
 import time
 import json
 import win32gui
-
+import win32con
+from pynput.keyboard import Key, Controller
+keyboard = Controller()
 is_alive= True
 def exit_application():
     global is_alive
     stop_checking_hotkeys()
     is_alive = False
-# Declare some key bindings.
-# These take the format of [<key list>, <keydown handler callback>, <keyup handler callback>]
-bindings = [
-    [["alt", "1"], None, lambda: DesktopSwitcher.switchToDesktop(1)],
-    [["alt", "2"], None, lambda: DesktopSwitcher.switchToDesktop(2)],
-    [["alt", "3"], None, lambda: DesktopSwitcher.switchToDesktop(3)],
-    [["alt", "4"], None, lambda: DesktopSwitcher.switchToDesktop(4)],
-    [["alt", "5"], None, lambda: DesktopSwitcher.switchToDesktop(5)],
-    [["alt", "6"], None, lambda: DesktopSwitcher.switchToDesktop(6)],
-    [["alt", "7"], None, lambda: DesktopSwitcher.switchToDesktop(7)],
-    [["alt", "8"], None, lambda: DesktopSwitcher.switchToDesktop(8)],
-    [["alt", "9"], None, lambda: DesktopSwitcher.switchToDesktop(9)],
-    [["alt", "0"], None, exit_application],
-]
 
-
-# Keep waiting until the user presses the exit_application keybinding.
-# Note that the hotkey listener will exit when the main thread does.
-class DesktopSwitcher:
-    def addDesktops(number,currentDesktopCount):
-        assert number <= 9
-        assert number > 0
-        #add desktops if neccessary
-        if currentDesktopCount < number:
-            for i in range(0,number-currentDesktopCount):
-                VirtualDesktop.create()
-    def switchToDesktop(number):
-        VirtualDesktop(number).go()
-    def currentDesktop():
-        return VirtualDesktop.current()
 class App:
     def __init__(self, name, start):
         self.name = name
@@ -60,7 +33,14 @@ class App:
         print(("Trying to start %s") % (self.start))
         Popen([self.start])
         time.sleep(5)
+
 class Desktop:
+    def switchTo(self):
+        global keyboard
+        VirtualDesktop(self.id).go()
+        with keyboard.pressed(Key.alt):
+            keyboard.press(Key.esc)
+            keyboard.release(Key.esc)
     def __init__(self, id, apps):
         self.id = id
         self.apps = []
@@ -72,21 +52,54 @@ class Desktop:
             if hwnd != None:
                 print(("Moving %s to desktop #%d")% (a.name,self.id))
                 AppView(hwnd).move(VirtualDesktop(self.id))
+# Keep waiting until the user presses the exit_application keybinding.
+# Note that the hotkey listener will exit when the main thread does.
+class DesktopSwitcher:
+    def __init__(self):
+        self.desktops = []
+        currentDesktopCount = len(get_virtual_desktops())
+        for i in range(1,10):
+            desktop = Desktop(i,[])
+            self.desktops = [*self.desktops,desktop]
+        if currentDesktopCount < 9:
+            for i in range(0,9-currentDesktopCount):
+                VirtualDesktop.create()
+    def addDesktops(self,desktops):
+        for desktop in desktops:
+            self.desktops[desktop.id-1]= desktop
+    def switchToDesktop(self,number):
+        self.desktops[number-1].switchTo()
+    def currentDesktop(self):
+        return VirtualDesktop.current()
+
+desktopSwitcher = DesktopSwitcher()
+# Declare some key bindings.
+# These take the format of [<key list>, <keydown handler callback>, <keyup handler callback>]
+bindings = [
+    [["alt", "1"], None, lambda: desktopSwitcher.switchToDesktop(1)],
+    [["alt", "2"], None, lambda: desktopSwitcher.switchToDesktop(2)],
+    [["alt", "3"], None, lambda: desktopSwitcher.switchToDesktop(3)],
+    [["alt", "4"], None, lambda: desktopSwitcher.switchToDesktop(4)],
+    [["alt", "5"], None, lambda: desktopSwitcher.switchToDesktop(5)],
+    [["alt", "6"], None, lambda: desktopSwitcher.switchToDesktop(6)],
+    [["alt", "7"], None, lambda: desktopSwitcher.switchToDesktop(7)],
+    [["alt", "8"], None, lambda: desktopSwitcher.switchToDesktop(8)],
+    [["alt", "9"], None, lambda: desktopSwitcher.switchToDesktop(9)],
+    [["alt", "0"], None, exit_application],
+]
+
 
 if __name__ == "__main__":
     #read number of desktops
-    desktop_count = 1
+    desktops = []
     with open("config.json",'r') as config:
         jj = json.load(config)
-        desktop_count = int(jj['desktop_count'])
-        desktops = []
         for desktop in jj["desktops"]:
             d = Desktop(**desktop)
             desktops = [*desktops,d]
+    desktopSwitcher.addDesktops(desktops)
     currentDesktopCount = len(get_virtual_desktops())
     print("Active desktops:" + str(currentDesktopCount))
-    print("Adding %d desktops" % (desktop_count))
-    DesktopSwitcher.addDesktops(desktop_count,currentDesktopCount)
     register_hotkeys(bindings)
     # Finally, start listening for keypresses
     start_checking_hotkeys()
