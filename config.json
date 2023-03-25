@@ -1,0 +1,23 @@
+{
+    "desktop_count": 3,
+    "desktops": [
+        {
+        "id": 2,
+        "apps": [
+            {
+                "name": "Double Commander",
+                "start": null
+            }
+        ]
+        },
+        {
+            "id": 3,
+            "apps":[
+                {
+                  "name": "Firefox",
+                  "start": null 
+                }
+            ]   
+        }
+    ]
+}
