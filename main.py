@@ -1,4 +1,5 @@
 from pyvda import AppView, get_apps_by_z_order, VirtualDesktop, get_virtual_desktops
+from subprocess import Popen
 from global_hotkeys import *
 import time
 import json
@@ -52,10 +53,13 @@ class App:
     def locate(self):
         win32gui.EnumWindows(lambda hwnd,extra: self.callback(hwnd,extra), None)
         if self.hwnd == None:
-            return self.start()
+            self.start_app()
+            win32gui.EnumWindows(lambda hwnd,extra: self.callback(hwnd,extra), None)
         return self.hwnd
-    def start():
-        return None
+    def start_app(self):
+        print(("Trying to start %s") % (self.start))
+        Popen([self.start])
+        time.sleep(5)
 class Desktop:
     def __init__(self, id, apps):
         self.id = id
@@ -86,6 +90,7 @@ if __name__ == "__main__":
     register_hotkeys(bindings)
     # Finally, start listening for keypresses
     start_checking_hotkeys()
+    print("ready")
     while is_alive:
         time.sleep(0.1)
 

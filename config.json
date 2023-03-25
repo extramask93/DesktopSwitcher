@@ -16,6 +16,10 @@
                 {
                   "name": "Firefox",
                   "start": null 
+                },
+                {
+                  "name": "Chrome",
+                  "start": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
                 }
             ]   
         }
