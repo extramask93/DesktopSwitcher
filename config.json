@@ -1,6 +1,15 @@
 {
     "desktops": [
         {
+        "id": 1,
+        "apps": [
+            {
+                "name": "powershell.exe",
+                "start": "C:\\projects\\wezterm\\wezterm-gui.exe"
+            }
+        ]
+        },
+        {
         "id": 2,
         "apps": [
             {
@@ -15,6 +24,15 @@
                 {
                   "name": "Firefox",
                   "start": null 
+                }
+            ]   
+        },
+        {
+            "id": 5,
+            "apps":[
+                {
+                  "name": "Google Chat",
+                  "start": "C:\\Program Files\\Google\\Chrome\\Application\\chrome_proxy.exe  --profile-directory=Default --app-id=mdpkiolbdkhdjpekfbkbmhigcaggjagi"
                 }
             ]   
         }
