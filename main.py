@@ -5,6 +5,7 @@ import time
 import json
 import win32gui
 import keyboard
+
 # Make sure to add C:\Users\damian.jozwiak\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
 # Remove-PSReadlineKeyHandler -Key Alt+1
 
@@ -38,10 +39,9 @@ class App:
 
 
 class Desktop:
-    def switchTo(self, activate=True):
-        if activate == True:
-            VirtualDesktop(self.id).go()
-            keyboard.press_and_release("alt+esc")
+    def switchTo(self):
+        VirtualDesktop(self.id).go()
+        keyboard.press_and_release("alt+esc")
 
     def __init__(self, id, apps):
         self.id = id
@@ -61,8 +61,8 @@ class DesktopSwitcher:
         for i in range(1, 10):
             desktop = Desktop(i, [])
             self.desktops = [*self.desktops, desktop]
-            keyboard.add_hotkey('alt+'+str(i), desktop.switchTo, args=(not keyboard.is_pressed('shift'),))
-            keyboard.add_hotkey('alt+shift+'+str(i), self.moveWindowTo, args=(desktop.id,))
+            keyboard.add_hotkey('alt+'+str(i), desktop.switchTo)
+            keyboard.add_hotkey('alt+shift+'+str(i), self.moveWindowTo, args=(i,))
         if currentDesktopCount < 9:
             for i in range(0, 9-currentDesktopCount):
                 VirtualDesktop.create()
@@ -74,11 +74,11 @@ class DesktopSwitcher:
     def moveWindowTo(self, targetDesktop):
         currentWindow = AppView.current()
         currentWindow.move(VirtualDesktop(targetDesktop))
+        self.desktops[targetDesktop-1].switchTo()
     def currentDesktop(self):
         return VirtualDesktop.current()
 
 if __name__ == "__main__":
-    # read number of desktops
     desktopSwitcher = DesktopSwitcher()
     desktops = []
     with open("config.json", 'r') as config:
