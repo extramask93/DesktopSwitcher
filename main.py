@@ -5,10 +5,27 @@ import time
 import json
 import win32gui
 import keyboard
-
+import threading
+from queue import Queue
 # Make sure to add C:\Users\damian.jozwiak\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
 # Remove-PSReadlineKeyHandler -Key Alt+1
 
+BUF_SIZE = 5
+q = Queue(BUF_SIZE)
+
+class SwitchingThread(threading.Thread):
+    def __init__(self, target=None, name=None, daemon = None):
+        super(SwitchingThread,self).__init__()
+        self.target = target
+        self.name = name
+        self.daemon = daemon
+
+    def run(self):
+        while True:
+            if q.qsize()>0:
+                item = q.get()
+                item()
+            time.sleep(0.1)
 class App:
     def __init__(self, name, start):
         self.name = name
@@ -40,8 +57,8 @@ class App:
 
 class Desktop:
     def switchTo(self):
-        VirtualDesktop(self.id).go()
-        keyboard.press_and_release("alt+esc")
+        print("Queue size: "+ str(q.qsize()))
+        q.put(lambda x=self.id: VirtualDesktop(x).go() or print("Switching to "+str(x)) or keyboard.press_and_release("alt+esc"))
 
     def __init__(self, id, apps):
         self.id = id
@@ -61,8 +78,8 @@ class DesktopSwitcher:
         for i in range(1, 10):
             desktop = Desktop(i, [])
             self.desktops = [*self.desktops, desktop]
-            keyboard.add_hotkey('alt+'+str(i), desktop.switchTo)
-            keyboard.add_hotkey('alt+shift+'+str(i), self.moveWindowTo, args=(i,))
+            keyboard.add_hotkey('alt+'+str(i), desktop.switchTo, suppress=True)
+            keyboard.add_hotkey('alt+shift+'+str(i), self.moveWindowTo, args=(i,), suppress=True)
         if currentDesktopCount < 9:
             for i in range(0, 9-currentDesktopCount):
                 VirtualDesktop.create()
@@ -72,14 +89,16 @@ class DesktopSwitcher:
     def switchToDesktop(self, number):
         self.desktops[number-1].switchTo()
     def moveWindowTo(self, targetDesktop):
-        currentWindow = AppView.current()
-        currentWindow.move(VirtualDesktop(targetDesktop))
-        self.desktops[targetDesktop-1].switchTo()
+        #currentWindow = AppView.current()
+        #currentWindow.move(VirtualDesktop(targetDesktop))
+        #self.desktops[targetDesktop-1].switchTo()
+        q.put(lambda td = targetDesktop: AppView.current().move(VirtualDesktop(td)))
     def currentDesktop(self):
         return VirtualDesktop.current()
 
 if __name__ == "__main__":
     desktopSwitcher = DesktopSwitcher()
+    swt = SwitchingThread(name="Switcher", daemon=True)
     desktops = []
     with open("config.json", 'r') as config:
         jj = json.load(config)
@@ -88,4 +107,5 @@ if __name__ == "__main__":
             desktops = [*desktops, d]
     desktopSwitcher.addDesktops(desktops)
     print("ready")
+    swt.start()
     keyboard.wait("alt+0")

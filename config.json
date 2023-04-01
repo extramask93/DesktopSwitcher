@@ -32,7 +32,7 @@
             "apps":[
                 {
                   "name": "Google Chat",
-                  "start": "C:\\Program Files\\Google\\Chrome\\Application\\chrome_proxy.exe  --profile-directory=Default --app-id=mdpkiolbdkhdjpekfbkbmhigcaggjagi"
+                  "start": null
                 }
             ]   
         }
